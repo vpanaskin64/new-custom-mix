@@ -2573,6 +2573,7 @@ function applyUpgrade() {
   });
 
   upsellDismissed = false; // show banner again if they hit max on new size
+  updateDisabledTiles();  // re-enable tiles now that max is higher
   renderUpsellBanner();
   renderPanelHeader();
   renderStickyBottom();
