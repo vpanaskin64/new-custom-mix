@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Custom Mix — Step 1: Pick a Box</title>
+  <link rel="stylesheet" href="shared/styles.css">
+  <style>
+    /* Zoom modal */
+    .zoom-modal-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: var(--color-bg-alt); border-radius: var(--radius-md); margin-bottom: var(--s-16); display: block; }
+    .zoom-modal-name { font-family: var(--font-display); font-size: var(--fs-24); margin: 0 0 var(--s-4); }
+    .zoom-modal-price { font-size: var(--fs-18); font-weight: 600; margin: 0 0 var(--s-8); }
+    .zoom-modal-meta { font-size: var(--fs-14); color: var(--color-fg-muted); margin: 0 0 var(--s-24); line-height: 1.5; }
+
+    /* Store picker */
+    .store-item { display: flex; align-items: center; justify-content: space-between; padding: var(--s-16) 0; border-bottom: 1px solid var(--color-border); cursor: pointer; }
+    .store-item:last-child { border-bottom: 0; }
+    .store-item__name { font-weight: 600; font-size: var(--fs-15); }
+    .store-item__addr { font-size: var(--fs-13); color: var(--color-fg-muted); margin-top: 2px; }
+    .store-item__arrow { color: var(--color-fg-muted); font-size: var(--fs-18); }
+
+    /* Downsize modal */
+    .ds-flavor-row { display: flex; align-items: center; gap: var(--s-8); padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+    .ds-flavor-row:last-child { border-bottom: 0; }
+    .ds-flavor-name { flex: 1; font-size: var(--fs-14); }
+    .ds-remove-btn { background: none; border: 0; font-size: var(--fs-13); color: var(--color-fg-muted); cursor: pointer; text-decoration: underline; padding: 0; min-height: 44px; }
+
+    /* Single-size static display */
+    .size-static { margin: 0 var(--s-16) var(--s-16); padding: var(--s-12); border: 2px solid var(--color-border-strong); font-size: var(--fs-15); font-weight: 700; display: flex; align-items: center; gap: var(--s-8); }
+
+    /* Summary expanded */
+    .bar-expanded { padding: var(--s-12) var(--s-16); border-top: 1px solid var(--color-border); font-size: var(--fs-13); }
+    .bar-expanded__row { display: flex; justify-content: space-between; padding: var(--s-6) 0; }
+
+    /* Fulfillment */
+    .fulfillment-wrap { padding: 0 var(--s-16) var(--s-16); }
+    .pickup-info { margin-top: var(--s-8); font-size: var(--fs-13); color: var(--color-fg-muted); display: flex; align-items: center; gap: var(--s-8); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/state.js"></script>
+
+<script type="text/babel">
+// ─── Shared components (inlined) ─────────────────────────────────────────────
+
+function CMHeader() {
+  return (
+    <header className="cm-header">
+      <div className="cm-header__logo">
+        <svg width="71" height="10" viewBox="0 0 141 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g clipPath="url(#clip0_83916_54774)">
+            <path d="M46.6387 18.4458C46.6387 18.4458 47.3669 18.1468 47.6245 18.1349C48.3261 18.1083 48.3113 18.2918 49.1727 18.4458C49.6523 18.5316 50.9163 18.5316 51.5084 18.4162C52.4232 18.2415 53.7287 17.3741 54.4066 16.2788C54.7825 15.669 54.969 14.2539 54.6049 13.2415C54.3651 12.5754 52.9442 11.4683 51.3693 11.0213C50.9755 10.9088 48.6695 10.4588 48.6132 8.9964C48.5925 8.4517 48.7583 7.48071 50.9489 7.66129C51.4285 7.69977 51.766 8.01061 51.766 8.01061C51.766 8.01061 51.4847 8.20599 51.4285 8.51682C51.387 8.73885 51.1472 9.95258 52.3255 10.3345C52.6807 10.4499 53.1218 10.4825 53.4237 10.4026C53.7257 10.3226 54.1431 9.97627 54.2378 9.67135C54.4066 9.13553 54.377 8.67668 54.3237 8.49018C54.1845 8.01061 54.7381 7.32085 54.7381 7.32085L53.3616 6.24921C53.3616 6.24921 53.2195 6.39723 52.7488 6.49196C51.763 6.6903 50.8927 6.18408 49.7381 6.18408C49.2082 6.18408 47.9975 6.25513 47.3195 6.49196C45.1526 7.25276 45.2088 9.67431 45.2384 10.1776C45.3776 12.4837 47.0946 13.1024 47.7636 13.2741C48.1751 13.3777 49.3148 13.7714 50.2651 14.1533C51.2124 14.5352 51.8459 14.9496 51.5972 16.1989C51.4285 17.0426 49.7885 17.1462 49.5635 17.0722C49.3355 16.9952 48.5777 16.6104 48.6902 16.4179C48.8027 16.2226 49.2911 14.5973 47.435 14.2599C46.5351 14.097 45.7476 14.8519 45.6055 15.4706C45.5078 15.9029 45.5759 16.5304 45.5759 16.7643C45.5759 16.9982 45.3776 17.3564 45.3776 17.3564L46.6446 18.4547L46.6387 18.4458Z" fill="#231F20"/>
+            <path d="M41.55 8.09907C41.55 8.09907 42.3907 8.13459 43.187 7.39451C43.9863 6.65146 44.3623 5.83145 44.3209 5.2157C44.2794 4.60292 44.1995 4.1115 43.6637 3.70593C43.1278 3.30037 42.669 3.22636 42.2486 3.26484C42.0207 3.28557 41.3546 3.56384 41.029 3.9694C40.7625 4.298 40.6885 4.66804 40.6915 5.11801C40.6915 5.56798 40.8484 6.0594 41.1178 6.30215C41.4908 6.64258 41.7246 6.77876 42.0947 6.9327C42.2309 6.9919 42.3818 7.00966 41.9378 7.53956C41.7158 7.80895 41.5441 8.10203 41.5441 8.10203L41.55 8.09907Z" fill="#231F20"/>
+            <path d="M31.899 11.9478C31.7421 11.338 31.1856 9.1503 32.9796 8.4783C33.9772 8.1053 34.963 8.64112 35.4603 9.08517C36.0198 9.58547 36.3721 10.3463 36.3721 10.3463L32.2928 12.9899C32.2928 12.9899 32.053 12.5517 31.899 11.9478ZM32.9115 14.4789L38.471 10.8555C38.471 10.8555 39.2495 10.3788 39.5663 10.0502C39.6344 9.97919 39.7173 9.78973 39.7084 9.73052C39.664 9.47298 39.5337 9.11478 39.1134 8.54639C38.693 7.97801 37.6125 7.03958 36.8546 6.73171C35.0251 5.99163 32.275 6.19589 30.8363 7.06623C30.3449 7.36522 29.4124 8.15563 28.9239 8.88091C28.4325 9.60619 27.7516 11.3705 28.0358 13.1971C28.471 15.9768 30.1465 17.1432 30.9843 17.5961C31.8221 18.0491 32.6983 18.3865 33.6871 18.4576C34.6758 18.5286 35.6527 18.5612 36.7895 18.1764C37.9292 17.7915 38.9861 16.8708 39.3265 16.2995C39.6669 15.7252 40.1465 14.9762 40.2028 14.6772C40.3182 14.0822 39.6817 13.7832 39.4153 13.8631C39.1489 13.9401 38.2341 15.6364 37.4378 16.0064C36.6089 16.3913 35.5254 16.6784 34.7409 16.4386C33.6456 16.1041 32.9174 14.4848 32.9174 14.4848L32.9115 14.4789Z" fill="#231F20"/>
+            <path d="M-0.000945918 17.1786L1.37857 18.416C1.37857 18.416 2.87058 18.0992 3.37679 18.2058C4.17904 18.3745 5.51119 18.5048 5.93748 18.5847C6.36673 18.6647 7.86466 18.6499 8.6373 18.4989C11.4792 17.9512 12.8972 15.0738 13.1933 13.7179C13.3235 13.1229 13.7557 9.86359 10.4017 8.35086C9.1672 7.79432 6.16247 6.41481 5.65329 6.05069C5.14707 5.68952 3.71131 3.27093 5.5704 2.00095C6.74861 1.1987 8.66098 2.49237 8.66098 2.49237C8.66098 2.49237 7.63671 3.82156 8.23766 5.13594C8.54553 5.8109 9.22345 6.87958 11.3046 6.21942C12.2341 5.92339 12.5183 4.87839 12.5716 3.95477C12.6189 3.09035 11.9529 1.97135 12.1157 1.60723C12.1986 1.42369 12.2755 1.34672 12.2755 1.34672L10.6296 0.165546C10.6296 0.165546 9.80367 0.313563 9.36258 0.355008C8.54257 0.431976 5.59408 -0.657426 2.68704 0.636239C0.981884 1.4 0.336532 3.25021 0.147071 4.10575C-0.0423906 4.96128 -0.0897559 7.29994 1.18023 8.45743C2.44725 9.61196 7.53902 11.4947 8.73203 12.9719C9.34186 13.7239 10.0405 16.1928 7.98603 16.8115C5.52895 17.5516 5.03162 16.5036 5.03162 16.5036C5.03162 16.5036 6.66276 13.6351 4.32706 12.5101C1.272 11.0388 0.306929 13.8926 0.221079 14.4225C0.120428 15.0383 0.221079 15.5859 0.221079 16.1099C0.221079 16.7286 -0.00390625 17.1786 -0.00390625 17.1786H-0.000945918Z" fill="#231F20"/>
+            <path d="M26.1827 14.4371C26.0732 14.2447 25.9607 14.0937 25.7031 14.0552C25.4456 14.0197 25.0193 14.3246 24.8742 14.594C24.7292 14.8634 24.3058 15.4436 23.7967 15.6834C23.3585 15.8906 22.6865 16.2636 21.5675 16.0801C20.5521 15.9143 20.1466 15.4081 19.744 15.0765C19.4746 14.8545 18.9832 14.2328 18.9832 14.2328C18.9832 14.2328 25.5758 10.1032 25.635 10.0617C25.6942 10.0233 25.6706 9.9078 25.5581 9.52296C25.4456 9.13811 25.1288 8.62006 24.9423 8.35363C24.7588 8.08424 22.3313 4.85748 17.7132 6.74617C15.0992 7.81781 14.7854 10.0529 14.596 11.1156C14.3443 12.5336 14.8831 15.2956 16.0376 16.4768C16.982 17.4448 17.1862 17.7497 18.5184 18.1938C19.9542 18.6733 23.0832 18.6112 24.3828 17.5188C25.262 16.7787 25.6735 16.1215 25.9636 15.5828C26.2537 15.044 26.2893 14.6206 26.1768 14.4282L26.1827 14.4371ZM18.3793 12.7053C18.3793 12.7053 17.9855 12.0363 17.9026 11.5005C17.6777 10.0588 18.1602 9.35718 18.5214 8.97234C19.2526 8.19377 20.9015 7.89181 21.8991 9.0049C22.059 9.18548 22.5622 10.1535 22.5622 10.1535L18.3822 12.7053H18.3793Z" fill="#231F20"/>
+            <path d="M92.5094 14.2095L87.5686 6.2373H84.6231L84.6172 18.4724H85.828V10.1716L90.7747 18.4694H93.7705V6.32315H92.5065L92.5094 14.2095Z" fill="#231F20"/>
+            <path d="M76.8922 6.24609L72.3984 18.4663L73.5915 18.4841L74.9739 15.1093H78.6595L79.9828 18.49H83.4671L78.7632 6.24609H76.8952H76.8922ZM75.4269 13.7476L76.8922 10.0768L78.3043 13.7476H75.4269Z" fill="#231F20"/>
+            <path d="M68.2462 17.0513C68.2462 17.0513 68.2314 17.2614 68.0774 17.291C67.808 17.3384 66.5262 17.3206 66.2746 17.3206C66.023 17.3206 65.9697 16.9595 65.9697 16.9595L65.9519 7.85647C65.9519 7.85647 65.9105 7.64629 66.2124 7.593C66.5144 7.53971 67.5831 7.58412 67.8347 7.58412C68.0863 7.58412 68.1396 7.66405 68.1396 7.93048C68.1396 8.34196 68.1455 9.3692 68.1455 9.3692L71.2124 9.384L71.2272 6.75227C71.2272 6.75227 71.2213 6.47991 71.0585 6.37334C70.8187 6.21941 70.6796 6.27565 70.4546 6.27565C70.0017 6.27565 63.6813 6.29341 63.6813 6.29341C63.6813 6.29341 63.2314 6.25197 63.0271 6.51248C62.8258 6.77299 62.888 7.31473 62.888 7.31473V17.7144C62.888 17.7144 62.9324 18.1081 63.184 18.3183C63.4356 18.5285 63.631 18.4663 63.9833 18.5196C64.3385 18.5729 70.345 18.4929 70.5967 18.5196C70.6529 18.5255 70.9342 18.4841 71.1976 18.2028C71.4522 17.9305 71.4048 17.3651 71.4048 17.0513C71.4048 16.7375 71.4196 15.4201 71.4196 15.4201L68.2699 15.4408L68.2491 17.0542L68.2462 17.0513Z" fill="#231F20"/>
+            <path d="M136.241 9.39308V7.07218C136.241 7.07218 136.202 6.67845 135.974 6.52155C135.746 6.36466 135.406 6.32617 135.406 6.32617H127.277C127.277 6.32617 126.939 6.32617 126.711 6.60148C126.483 6.87679 126.519 7.309 126.519 7.309V12.2261C126.519 12.2261 126.516 12.6228 126.88 12.8478C127.206 13.0491 127.466 13.0935 127.466 13.0935H132.502C132.502 13.0935 132.73 13.1734 132.73 13.3688V17.1047C132.73 17.1047 132.842 17.3031 132.484 17.3593C132.315 17.386 130.095 17.3593 130.095 17.3593C130.095 17.3593 129.867 17.2616 129.867 17.0633V15.4736H126.492V17.7708C126.492 17.7708 126.605 18.0846 126.72 18.203C126.833 18.3214 127.138 18.5168 127.25 18.5168H135.293C135.293 18.5168 135.714 18.425 135.942 18.1882C136.17 17.9544 136.128 17.2587 136.128 17.2587V12.46C136.128 12.46 136.048 12.0633 135.859 11.9449C135.669 11.8265 135.219 11.7909 135.219 11.7909H130.213C130.213 11.7909 129.897 11.7199 129.873 11.4771C129.858 11.3173 129.873 7.89811 129.873 7.89811C129.873 7.89811 129.911 7.66128 130.062 7.6228C130.213 7.58431 132.543 7.6228 132.543 7.6228C132.543 7.6228 132.771 7.66128 132.81 7.81818C132.848 7.97508 132.878 9.32795 132.878 9.32795L136.244 9.39011L136.241 9.39308Z" fill="#231F20"/>
+            <path d="M118.85 7.6318H124.226L124.199 6.26709L116.475 6.32038C116.475 6.32038 115.946 6.29373 115.667 6.7141C115.389 7.13447 115.389 7.50155 115.389 7.50155L115.359 17.3239C115.359 17.3239 115.359 18.0699 115.487 18.2416C115.655 18.4725 116.094 18.4933 116.094 18.4933H124.169V17.247C124.169 17.247 118.767 17.2203 118.693 17.1937C118.619 17.167 118.515 17.0101 118.515 17.0101C118.515 17.0101 118.435 13.0522 118.485 12.8953C118.536 12.7384 118.737 12.6348 118.737 12.6348L122.728 12.6052L122.757 11.2523C122.757 11.2523 118.921 11.3322 118.793 11.2523C118.669 11.1753 118.642 11.0954 118.642 11.0954C118.642 11.0954 118.616 7.86863 118.642 7.79166C118.666 7.71173 118.844 7.63476 118.844 7.63476L118.85 7.6318Z" fill="#231F20"/>
+            <path d="M104.953 6.34107C104.651 6.28778 96.4805 6.34107 96.4805 6.34107V18.4577H105.03C105.03 18.4577 105.373 18.4991 105.583 18.2475C105.844 17.9396 105.817 17.2913 105.817 17.2913V7.54592C105.817 7.54592 105.93 6.88577 105.649 6.63118C105.433 6.4358 105.255 6.39731 104.953 6.34403V6.34107ZM102.792 17.093C102.691 17.3032 102.591 17.3032 102.591 17.3032H99.5622V7.7561C99.5622 7.7561 102.585 7.71762 102.656 7.77683C102.783 7.88044 102.795 7.96629 102.795 7.96629C102.795 7.96629 102.896 16.8828 102.795 17.093H102.792Z" fill="#231F20"/>
+            <path d="M109.355 18.5196H112.636V6.32303L109.355 6.29639V18.5196Z" fill="#231F20"/>
+            <path d="M139.061 17.0693C139.307 17.0693 139.55 17.1315 139.783 17.2588C140.017 17.3861 140.201 17.5667 140.334 17.8005C140.464 18.0344 140.529 18.2801 140.529 18.5377C140.529 18.7952 140.464 19.032 140.337 19.2659C140.207 19.4998 140.026 19.6803 139.792 19.8106C139.558 19.9409 139.316 20.003 139.061 20.003C138.807 20.003 138.564 19.9379 138.33 19.8106C138.096 19.6803 137.915 19.4998 137.785 19.2659C137.655 19.032 137.59 18.7893 137.59 18.5377C137.59 18.286 137.655 18.0374 137.788 17.8005C137.921 17.5667 138.102 17.3861 138.339 17.2588C138.573 17.1315 138.815 17.0693 139.061 17.0693ZM139.061 17.3121C138.854 17.3121 138.653 17.3654 138.457 17.4719C138.262 17.5785 138.108 17.7295 137.998 17.9249C137.889 18.1203 137.833 18.3245 137.833 18.5377C137.833 18.7508 137.889 18.9521 137.995 19.1445C138.105 19.3369 138.256 19.4879 138.451 19.5975C138.647 19.707 138.851 19.7603 139.061 19.7603C139.271 19.7603 139.476 19.707 139.671 19.5975C139.866 19.4879 140.017 19.3369 140.124 19.1445C140.233 18.9491 140.287 18.7478 140.287 18.5377C140.287 18.3275 140.23 18.1203 140.121 17.9249C140.011 17.7295 139.857 17.5785 139.662 17.4719C139.467 17.3654 139.265 17.3121 139.061 17.3121ZM138.416 19.3488V17.7709H138.96C139.147 17.7709 139.28 17.7857 139.366 17.8153C139.449 17.8449 139.517 17.8953 139.564 17.9663C139.615 18.0374 139.638 18.1143 139.638 18.1972C139.638 18.3127 139.597 18.4133 139.514 18.4962C139.431 18.5821 139.322 18.6294 139.183 18.6383C139.239 18.662 139.283 18.6886 139.316 18.7212C139.381 18.7834 139.458 18.8899 139.55 19.035L139.742 19.3458H139.428L139.286 19.0972C139.174 18.9018 139.088 18.7804 139.023 18.7301C138.975 18.6916 138.907 18.6738 138.818 18.6768H138.667V19.3488H138.413H138.416ZM138.67 18.4607H138.984C139.135 18.4607 139.236 18.44 139.292 18.3956C139.348 18.3512 139.375 18.292 139.375 18.2209C139.375 18.1735 139.363 18.1321 139.336 18.0966C139.31 18.061 139.274 18.0314 139.227 18.0137C139.18 17.9959 139.094 17.987 138.966 17.987H138.673V18.4666L138.67 18.4607Z" fill="#231F20"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_83916_54774">
+              <rect width="140.53" height="20" fill="white"/>
+            </clipPath>
+          </defs>
+        </svg>
+      </div>
+      <span className="cm-header__label">Build a Custom Box</span>
+    </header>
+  );
+}
+
+function BottomSheet({ open, onClose, children }) {
+  React.useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+  if (!open) return null;
+  return (
+    <div className="scrim" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="sheet" role="dialog" aria-modal="true">{children}</div>
+    </div>
+  );
+}
+
+function ProgressBar({ pct, style, gold }) {
+  return (
+    <div className="progress" style={style}>
+      <div className="progress__fill" style={{
+        width: `${Math.min(100, Math.max(0, pct))}%`,
+        background: gold ? 'var(--color-progress-fill)' : undefined
+      }} />
+    </div>
+  );
+}
+
+function PercentStepper({ value, onDecrement, onIncrement, minVal = 1 }) {
+  return (
+    <div className="stepper" onClick={(e) => e.stopPropagation()}>
+      <button className="stepper__btn" onClick={onDecrement} disabled={value <= minVal}>−</button>
+      <span className="stepper__val">{value}%</span>
+      <button className="stepper__btn" onClick={onIncrement} disabled={value >= 99}>+</button>
+    </div>
+  );
+}
+
+// ─── Screen-specific code ─────────────────────────────────────────────────────
+
+const { useState } = React;
+const D = window.SEES_DATA;
+const S = window.SeesState;
+
+// ─── Downsize Conflict Modal ──────────────────────────────────────────────────
+function DownsizeModal({ targetSizeId, flavors, onSwitch, onCancel }) {
+  const [local, setLocal] = useState([...flavors]);
+  const targetSize = D.findSize(targetSizeId);
+  const cap = targetSize?.cap || 0;
+  const overCount = local.length - cap;
+
+  return (
+    <BottomSheet open={true} onClose={onCancel}>
+      <div className="sheet__handle" />
+      <div style={{ position: 'relative' }}>
+        <button className="sheet__close" onClick={onCancel}>✕</button>
+        <h2 className="sheet__title">Too many flavors for this box</h2>
+      </div>
+      <p style={{ fontSize: 'var(--fs-14)', color: 'var(--color-fg-muted)', marginBottom: 'var(--s-16)' }}>
+        The {targetSize?.label} box holds up to {cap} flavors.
+        {overCount > 0
+          ? <strong> Remove {overCount} flavor{overCount !== 1 ? 's' : ''} to switch.</strong>
+          : <span> You're ready to switch!</span>
+        }
+      </p>
+      <div style={{ marginBottom: 'var(--s-20)' }}>
+        {local.map(f => {
+          const flavor = D.findFlavor(f.id);
+          return (
+            <div key={f.id} className="ds-flavor-row">
+              <span className="ds-flavor-name">{flavor?.name}</span>
+              <button className="ds-remove-btn" onClick={() => setLocal(prev => prev.filter(x => x.id !== f.id))}>
+                Remove
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <button
+        className="btn"
+        disabled={local.length > cap}
+        style={{ marginBottom: 'var(--s-8)' }}
+        onClick={() => onSwitch(S.rebalanceEqual(local))}
+      >
+        Switch to {targetSize?.label}
+      </button>
+      <button className="btn btn--secondary" onClick={onCancel}>Keep Current Box</button>
+    </BottomSheet>
+  );
+}
+
+// ─── Box Zoom Modal ───────────────────────────────────────────────────────────
+function BoxZoomModal({ styleId, sizeId, onClose, onSelectAndContinue }) {
+  const style = D.findStyle(styleId);
+  const size  = D.findSize(sizeId);
+
+  return (
+    <BottomSheet open={true} onClose={onClose}>
+      <div className="sheet__handle" />
+      <div style={{ position: 'relative' }}>
+        <button className="sheet__close" onClick={onClose}>✕</button>
+      </div>
+      <img className="zoom-modal-img" src={style?.image} alt={style?.name} />
+      <p className="zoom-modal-name">{style?.name}</p>
+      <p className="zoom-modal-price">${size?.price.toFixed(2)}</p>
+      <p className="zoom-modal-meta">Holds up to {size?.cap} flavors · Perfect for gifting or yourself.</p>
+      <button className="btn" onClick={onSelectAndContinue}>
+        Start from this mix · ${size?.price.toFixed(2)}
+      </button>
+    </BottomSheet>
+  );
+}
+
+// ─── Store Picker Modal ───────────────────────────────────────────────────────
+function StorePickerModal({ onSelect, onClose }) {
+  return (
+    <BottomSheet open={true} onClose={onClose}>
+      <div className="sheet__handle" />
+      <div style={{ position: 'relative' }}>
+        <button className="sheet__close" onClick={onClose}>✕</button>
+        <h2 className="sheet__title">Choose a Store</h2>
+      </div>
+      {D.stores.map(store => (
+        <div key={store.id} className="store-item" onClick={() => { onSelect(store.id); onClose(); }}>
+          <div>
+            <div className="store-item__name">{store.name}</div>
+            <div className="store-item__addr">{store.address}</div>
+          </div>
+          <span className="store-item__arrow">›</span>
+        </div>
+      ))}
+    </BottomSheet>
+  );
+}
+
+// ─── Summary Bar ─────────────────────────────────────────────────────────────
+function SummaryBar({ state, expanded, onToggle, onNext }) {
+  const style  = D.findStyle(state.boxStyleId);
+  const size   = D.findSize(state.boxSizeId);
+  const design = D.findDesign(state.boxDesignId);
+  const caption = [style?.name, size?.label, state.fulfillment === 'shipping' ? 'Shipping' : 'Pick Up'].filter(Boolean).join(' · ');
+
+  return (
+    <div className="bottom-bar">
+      {expanded && (
+        <div className="bar-expanded">
+          <div className="bar-expanded__row">
+            <span>{size?.label} {style?.name}</span>
+            <span style={{ fontWeight: 600 }}>${size?.price.toFixed(2)}</span>
+          </div>
+          {design?.upcharge > 0 && (
+            <div className="bar-expanded__row">
+              <span>{design.name} design</span>
+              <span>+${design.upcharge.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="divider" style={{ margin: 'var(--s-8) 0' }} />
+          <div className="bar-expanded__row" style={{ fontWeight: 700 }}>
+            <span>Subtotal</span>
+            <span>${S.subtotal(state).toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+      <div className="bottom-bar__summary">
+        <div className="bottom-bar__left">
+          <p className="bottom-bar__step">Step 1 of 3 · Design the Box</p>
+          <p className="bottom-bar__title">{caption}</p>
+        </div>
+        <button className="bottom-bar__chev" onClick={onToggle}>{expanded ? '▼' : '▲'}</button>
+      </div>
+      <div className="bottom-bar__cta">
+        <button className="btn" onClick={onNext} style={{ borderRadius: 0 }}>
+          Next: Select Flavors
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [state, setState_]        = useState(S.get());
+  const [summaryExp, setSummaryExp]  = useState(false);
+  const [zoomStyleId, setZoomStyleId] = useState(null);
+  const [storeOpen, setStoreOpen]    = useState(false);
+  const [downsizeTarget, setDownsizeTarget] = useState(null);
+
+  function update(partial) { setState_(S.set(partial)); }
+
+  const currentStyle   = D.findStyle(state.boxStyleId);
+  const isSingleSize   = currentStyle?.sizeIds.length === 1;
+  const isSingleDesign = currentStyle?.designIds.length === 1;
+
+  function selectStyle(styleId) {
+    const st = D.findStyle(styleId);
+    update({ boxStyleId: styleId, boxSizeId: st.sizeIds[0], boxDesignId: st.designIds[0] });
+  }
+
+  function selectSize(sizeId) {
+    const newSize = D.findSize(sizeId);
+    if (state.flavors.length > (newSize?.cap || 0)) {
+      setDownsizeTarget(sizeId);
+    } else {
+      update({ boxSizeId: sizeId });
+    }
+  }
+
+  const validDesignIds = currentStyle?.designIds || [];
+  const visibleDesigns = D.designs.filter(d => validDesignIds.includes(d.id));
+  const validSizeIds   = currentStyle?.sizeIds || [];
+  const visibleSizes   = D.sizes.filter(s => validSizeIds.includes(s.id));
+  const zoomSize       = isSingleSize
+    ? D.findSize(currentStyle.sizeIds[0])
+    : D.findSize(state.boxSizeId);
+
+  return (
+    <div className="app">
+      <CMHeader />
+
+      {/* Promo Banner */}
+      {!state.promoDismissed && (
+        <div className="promo">
+          <div className="promo__icon">🎁</div>
+          <div className="promo__body">
+            <p className="promo__title">The New Square Box is Out!</p>
+            <p className="promo__sub">Experiment with a fresh box design.</p>
+          </div>
+          <button className="promo__cta" onClick={() => selectStyle('square')}>
+            Select Box <span>›</span>
+          </button>
+          <button className="promo__close" onClick={() => update({ promoDismissed: true })}>✕</button>
+        </div>
+      )}
+
+      {/* Fulfillment */}
+      <span className="section-label">How you'll get Custom Mix</span>
+      <div className="fulfillment-wrap">
+        <div className="seg">
+          <button
+            className="seg__opt"
+            aria-pressed={state.fulfillment === 'shipping'}
+            onClick={() => update({ fulfillment: 'shipping', storeId: null })}
+          >
+            🚚 Shipping
+          </button>
+          <button
+            className="seg__opt"
+            aria-pressed={state.fulfillment === 'pickup'}
+            onClick={() => setStoreOpen(true)}
+          >
+            🏪 Pick Up in Store
+          </button>
+        </div>
+        {state.fulfillment === 'pickup' && state.storeId && (
+          <div className="pickup-info">
+            📍 {D.stores.find(s => s.id === state.storeId)?.name}
+            <button className="text-link" onClick={() => setStoreOpen(true)}>Change</button>
+          </div>
+        )}
+      </div>
+
+      {/* Box Style */}
+      <span className="section-label">Select Box Style</span>
+      <div className="tile-grid-3">
+        {D.styles.map(st => (
+          <button
+            key={st.id}
+            className="tile"
+            aria-pressed={state.boxStyleId === st.id}
+            onClick={() => selectStyle(st.id)}
+          >
+            <div
+              className="tile__expand"
+              onClick={e => { e.stopPropagation(); setZoomStyleId(st.id); }}
+              role="button"
+              aria-label={`Zoom ${st.name}`}
+            >⌃⌄</div>
+            <img className="tile__image" src={st.image} alt={st.name} />
+            <div className="tile__body">
+              <p className="tile__title">{st.name}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Box Size */}
+      <span className="section-label">Select Box Size</span>
+      {isSingleSize ? (
+        <div className="size-static">
+          {D.findSize(currentStyle.sizeIds[0])?.label} &nbsp;·&nbsp; ${D.findSize(currentStyle.sizeIds[0])?.price.toFixed(2)}
+        </div>
+      ) : (
+        <div className="tile-grid-3">
+          {visibleSizes.map(sz => (
+            <button
+              key={sz.id}
+              className={`tile size-tile${sz.id === state.boxSizeId ? '' : ''}`}
+              aria-pressed={state.boxSizeId === sz.id}
+              onClick={() => selectSize(sz.id)}
+            >
+              <div className="tile__body">
+                <p className="tile__title">{sz.label}</p>
+                <p className="tile__meta">${sz.price.toFixed(2)}</p>
+                <p className="tile__cap">up to {sz.cap} flavors</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Box Design */}
+      {!isSingleDesign && (
+        <>
+          <span className="section-label">Select Box Design</span>
+          <div className="tile-grid-3">
+            {visibleDesigns.map(d => (
+              <button
+                key={d.id}
+                className="tile"
+                aria-pressed={state.boxDesignId === d.id}
+                onClick={() => update({ boxDesignId: d.id })}
+              >
+                <div
+                  className="tile__expand"
+                  onClick={e => { e.stopPropagation(); /* design zoom optional */ }}
+                >⌃⌄</div>
+                <img className="tile__image" src={d.image} alt={d.name} />
+                <div className="tile__body">
+                  <p className="tile__title">{d.name}</p>
+                  <p className="tile__upcharge">{d.upcharge > 0 ? `+$${d.upcharge.toFixed(2)}` : 'Free'}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div style={{ height: 'var(--s-40)' }} />
+
+      {/* Summary bar */}
+      <SummaryBar
+        state={state}
+        expanded={summaryExp}
+        onToggle={() => setSummaryExp(e => !e)}
+        onNext={() => window.location.href = '02-select-flavors.html'}
+      />
+
+      {/* Zoom modal */}
+      {zoomStyleId && (
+        <BoxZoomModal
+          styleId={zoomStyleId}
+          sizeId={zoomSize?.id || state.boxSizeId}
+          onClose={() => setZoomStyleId(null)}
+          onSelectAndContinue={() => {
+            selectStyle(zoomStyleId);
+            window.location.href = '02-select-flavors.html';
+          }}
+        />
+      )}
+
+      {/* Store picker */}
+      {storeOpen && (
+        <StorePickerModal
+          onSelect={storeId => update({ fulfillment: 'pickup', storeId })}
+          onClose={() => {
+            if (!state.storeId) update({ fulfillment: 'shipping' });
+            setStoreOpen(false);
+          }}
+        />
+      )}
+
+      {/* Downsize conflict */}
+      {downsizeTarget && (
+        <DownsizeModal
+          targetSizeId={downsizeTarget}
+          flavors={state.flavors}
+          onSwitch={trimmed => { update({ boxSizeId: downsizeTarget, flavors: trimmed }); setDownsizeTarget(null); }}
+          onCancel={() => setDownsizeTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
