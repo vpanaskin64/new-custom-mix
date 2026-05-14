@@ -1163,6 +1163,19 @@
     .flavor-tile.selected .flavor-tile__cb svg { display: block; }
     .flavor-tile.selected .flavor-tile__stepper { max-height: 40px; opacity: 1; }
 
+    /* Max flavors reached — unselected tiles are visually disabled */
+    .flavor-tile--disabled {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+    /* Selected tiles always stay fully interactive */
+    .flavor-tile.selected.flavor-tile--disabled {
+      opacity: 1;
+      cursor: pointer;
+      pointer-events: all;
+    }
+
     .empty-state { padding: 48px 24px; text-align: center; color: var(--secondary-text); font-size: 14px; line-height: 20px; display: none; grid-column: 1 / -1; }
     .empty-state.visible { display: block; }
 
@@ -1894,6 +1907,9 @@ function renderGrid() {
         </div>
       </div>`;
   }).join('');
+
+  // Apply disabled state immediately after rebuild
+  updateDisabledTiles();
 }
 
 // Targeted tile DOM updates — no full re-render, no image flicker
@@ -1903,6 +1919,14 @@ function updateTile(id) {
   tile.classList.toggle('selected', state.flavors[id] !== undefined);
   const pctEl = tile.querySelector('.flavor-tile__pct');
   if (pctEl) pctEl.textContent = `${state.flavors[id] || 0}%`;
+}
+function updateDisabledTiles() {
+  const atMax = Object.keys(state.flavors).length >= state.size.max;
+  document.querySelectorAll('.flavor-tile').forEach(tile => {
+    // Only disable unselected tiles; selected tiles stay fully interactive
+    const isSelected = tile.classList.contains('selected');
+    tile.classList.toggle('flavor-tile--disabled', atMax && !isSelected);
+  });
 }
 function updateAllPcts() {
   document.querySelectorAll('.flavor-tile.selected').forEach(tile => {
@@ -1952,6 +1976,7 @@ document.getElementById('flavor-grid').addEventListener('click', e => {
   rebalance();
   updateTile(id);
   updateAllPcts();
+  updateDisabledTiles();  // grey out unselected tiles at max
   renderStickyBottom();
   renderUpsellBanner();   // show/hide upsell when count changes
 });
@@ -2186,6 +2211,7 @@ function renderSummaryPanel() {
       const tile = document.querySelector(`.flavor-tile[data-id="${id}"]`);
       if (tile) tile.classList.remove('selected');
       updateAllPcts();
+      updateDisabledTiles();  // re-enable tiles if count dropped below max
       renderStickyBottom();
     });
   });
