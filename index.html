@@ -1811,6 +1811,9 @@ function updateSizeSection() {
     document.querySelector('.size-card[data-size="1lb"]').classList.add('active');
     state.size = { id: '1lb', label: '1lb', max: 8, price: 35.50 }; // Heart/Square: 8 flavors
   }
+  // Hide design section for non-standard boxes
+  const designSection = document.querySelector('.box-design');
+  if (designSection) designSection.style.display = isStandard ? '' : 'none';
 }
 
 function makeToggle(selector) {
@@ -2544,7 +2547,8 @@ function renderUpsellBanner() {
   const banner  = document.getElementById('upsell-banner');
   const count   = Object.keys(state.flavors).length;
   const next    = getNextSize();
-  const visible = state.step === 2 && count >= state.size.max && next !== null && !upsellDismissed;
+  const isStandard = state.style.id === 'standard';
+  const visible = state.step === 2 && count >= state.size.max && next !== null && !upsellDismissed && isStandard;
 
   banner.classList.toggle('visible', visible);
 
