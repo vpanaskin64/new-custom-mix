@@ -27,4 +27,4 @@ Open `index.html` in any modern browser — no build step required.
 
 ## Assets
 
-Product images, box images, and icons are in the `Assets/` folder.
+Product images, box images, and icons are in the `Assets/` folder. 
